@@ -34,6 +34,10 @@ public class Aeroport {
         return longitude;
     }
 
+    public String getCountry() {
+        return country;
+    }
+
     // --- MÉTHODE toString() ---
     @Override
     public String toString() {
@@ -43,21 +47,21 @@ public class Aeroport {
 
     // --- MÉTHODE calculDistance() ---
     public double calculDistance(Aeroport other) {
-        // Conversion en radians
-        double lat1Rad = Math.toRadians(this.latitude);
-        double lat2Rad = Math.toRadians(other.latitude);
-        double lon1Rad = Math.toRadians(this.longitude);
-        double lon2Rad = Math.toRadians(other.longitude);
+        // Conversion degrés -> radians
+        double theta1 = Math.toRadians(this.latitude);
+        double theta2 = Math.toRadians(other.latitude);
+        double phi1 = Math.toRadians(this.longitude);
+        double phi2 = Math.toRadians(other.longitude);
 
-        double deltaLat = lat2Rad - lat1Rad;
-        double deltaLon = lon2Rad - lon1Rad;
-        double meanLat = (lat2Rad + lat1Rad) / 2.0;
+        double deltaTheta = theta2 - theta1;
+        double deltaPhi = phi2 - phi1;
+        double meanTheta = (theta2 + theta1) / 2.0;
 
-        // Formule de la norme simplifiée
-        double terme1 = deltaLat * deltaLat;
-        double terme2 = (deltaLon * Math.cos(meanLat));
-        double norme = terme1 + (terme2 * terme2);
+        // Formule fournie dans l'énoncé (approximation sur sphère)
+        double norme = (deltaTheta * deltaTheta) + Math.pow(deltaPhi * Math.cos(meanTheta), 2);
 
-        return norme;
+        // Conversion en distance réelle sur Terre (km)
+        final double earthRadiusKm = 6371.0;
+        return Math.sqrt(norme) * earthRadiusKm;
     }
 }

@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.util.Objects;
 
 public class World {
 
@@ -11,34 +12,40 @@ public class World {
     // Lit le fichier CSV pour remplir la liste
     public World(String fileName) {
         list = new ArrayList<>();
-        try {
-            // Lecture du fichier spécifié par 'fileName'
-            BufferedReader buf = new BufferedReader(new FileReader(fileName));
-            String s = buf.readLine(); // Ignore la ligne d'en-tête
+        try (BufferedReader buf = new BufferedReader(new FileReader(fileName))) {
+            // Ignore l'en-tête
+            buf.readLine();
 
-            while ((s = buf.readLine()) != null) {
-                s = s.replaceAll("\"", ""); // Nettoyage
-                String[] fields = s.split(","); // Séparation par la virgule
+            String line;
+            while ((line = buf.readLine()) != null) {
+                // Les champs sont séparés par des virgules, les coordonnées par un ';'
+                line = line.replace("\"", "");
+                String[] fields = line.split(",");
 
-                // Filtre : s'assurer que c'est bien un "large_airport"
-                if (fields.length > 1 && fields[1].equals("large_airport")) {
-                    try {
-                        // Extraction des champs
-                        String IATA = fields[8];
-                        String Name = fields[2];
-                        String country = fields[5];
+                // Champs attendus : ident,type,name,...,gps_code(8),iata_code(9),local_code(10),coordinates(11)
+                if (fields.length < 12 || !Objects.equals(fields[1], "large_airport")) {
+                    continue;
+                }
 
-                        // Parsing des coordonnées (vérifiez vos indices CSV !)
-                        String[] coords = fields[fields.length - 2].split(";");
-                        double longitude = Double.parseDouble(coords[0]);
-                        double latitude = Double.parseDouble(coords[1]);
+                String iata = fields[9];
+                if (iata == null || iata.isEmpty()) {
+                    continue; // on ignore les entrées sans code IATA
+                }
 
-                        // Création de l'objet et ajout à la liste
-                        Aeroport a = new Aeroport(IATA, Name, country, latitude, longitude);
-                        list.add(a);
-                    } catch (NumberFormatException e) {
-                        // Ignore la ligne si la conversion d'un nombre échoue
-                    }
+                String name = fields[2];
+                String country = fields[5];
+                String[] coords = fields[11].split(";");
+
+                if (coords.length != 2) {
+                    continue;
+                }
+
+                try {
+                    double longitude = Double.parseDouble(coords[0]);
+                    double latitude = Double.parseDouble(coords[1]);
+                    list.add(new Aeroport(iata, name, country, latitude, longitude));
+                } catch (NumberFormatException ignored) {
+                    // on saute la ligne si le parsing échoue
                 }
             }
         } catch (Exception e) {
@@ -60,12 +67,11 @@ public class World {
     }
 
     // Recherche l'aéroport le plus proche des coordonnées de référence
-    public Aeroport findNearestAirport(double refLongitude, double refLatitude) {
+    public Aeroport findNearest(double refLatitude, double refLongitude) {
         if (list.isEmpty()) {
             return null;
         }
 
-        // Crée un point de référence Aeroport pour utiliser la méthode calculDistance()
         Aeroport reference = new Aeroport("REF", "Reference Point", "", refLatitude, refLongitude);
 
         Aeroport nearest = list.get(0);
@@ -79,6 +85,11 @@ public class World {
             }
         }
         return nearest;
+    }
+
+    // Compatibilité avec l'ancien nom
+    public Aeroport findNearestAirport(double refLongitude, double refLatitude) {
+        return findNearest(refLatitude, refLongitude);
     }
 
     // Getter pour obtenir la liste complète

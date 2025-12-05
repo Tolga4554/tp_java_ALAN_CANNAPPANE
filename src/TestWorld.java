@@ -3,7 +3,6 @@ public class TestWorld {
     public static void main(String[] args) {
 
         System.out.println("Démarrage du Test de la classe World");
-
         World w = new World("data\\airport-codes_no_comma.csv");
 
         int nombreAeroports = w.getList().size();
@@ -35,7 +34,7 @@ public class TestWorld {
         System.out.println("Recherche du plus proche de : Lat=" + latParis + ", Lon=" + lonParis);
 
 
-        Aeroport nearestAirport = w.findNearestAirport(lonParis, latParis);
+        Aeroport nearestAirport = w.findNearest(latParis, lonParis);
 
         if (nearestAirport != null) {
             System.out.println("RÉSULTAT ATTENDU : ORY");
